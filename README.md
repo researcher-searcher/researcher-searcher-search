@@ -1,2 +1,2 @@
 # researcher-searcher-search
-Process data into clean files and index using Elasticsearch 
+Process output data, extract info and index using Elasticsearch 
