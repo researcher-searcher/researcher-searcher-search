@@ -48,7 +48,7 @@ def index_mean_vectors():
     create_mean_vector_index(index_name=vector_index_name, dim_size=dim_size)
     df = pd.read_pickle(people_vector)
     index_mean_vector_data(
-        df=df, index_name=vector_index_name, id_field='email'
+        df=df, index_name=vector_index_name, id_field='person_id'
     )
     vector_index_name = "use_output_vectors"
     delete_index(vector_index_name)

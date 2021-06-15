@@ -3,7 +3,6 @@ import pprint
 import pandas as pd
 import numpy as np
 import seaborn as sns
-import altair as alt
 import matplotlib.pyplot as plt
 import os
 from loguru import logger
@@ -119,12 +118,12 @@ def create_mean_people_vectors():
     logger.info(df.shape)
     logger.info(f'\n{df.head()}')
     
-    vectors = df[['email','vector']].groupby(['email'])
+    vectors = df[['person_id','vector']].groupby(['person_id'])
     data = []
     for v in vectors:
         vector_list = list(v[1]['vector'])
         mean_vector = list(np.mean(vector_list,axis=0))
-        data.append({'email':v[0],'vector':mean_vector})
+        data.append({'person_id':v[0],'vector':mean_vector})
     md = pd.DataFrame(data)
     md.to_pickle(PEOPLE_VECTORS)
 
@@ -132,32 +131,22 @@ def create_pairwise_people(aaa):
     vector_df = pd.read_pickle(PEOPLE_VECTORS)
     num = vector_df.shape[0]
     data = []
-    emails = list(vector_df['email'])
+    person_ids = list(vector_df['person_id'])
     for i in range(0,num):
         if i % 1000 == 0:
             logger.info(i)
-        iname = emails[i]
+        iname = person_ids[i]
         for j in range(0,num):
-            jname = emails[j]
+            jname = person_ids[j]
             data.append({
-                'email1':iname,
-                'email2':jname,
+                'person_id1':iname,
+                'person_id2':jname,
                 'score': 1-aaa[i][j]
             })
     df = pd.DataFrame(data)
-    df.drop_duplicates(subset=['email1','email2'],inplace=True)
+    df.drop_duplicates(subset=['person_id1','person_id2'],inplace=True)
     logger.info(f'Writing {PEOPLE_PAIRS}')
     df.to_pickle(PEOPLE_PAIRS)  
-
-def altair_scatter_plot(source):
-    chart = alt.Chart(source).mark_point().encode(
-        x='x',
-        y='y',
-        color='org-name',
-        shape='org-name',
-        tooltip=['email', 'org-name'],
-    ).interactive()
-    chart.save('workflow/results/altair.html',scale_factor=10.0)
 
 def plotly_scatter_plot(df):
     #import plotly.graph_objects as go
@@ -170,14 +159,14 @@ def plotly_scatter_plot(df):
         x="x", 
         y="y", 
         color="org-name",
-        hover_data=['email']
+        hover_data=['person_id']
         )
     fig.write_html('workflow/results/plotly.html')
 
 def tsne_people():
     df=pd.read_pickle(PEOPLE_PAIRS)
     logger.info(df.head())
-    df_pivot = df.pivot(index='email1', columns='email2', values='score')
+    df_pivot = df.pivot(index='person_id1', columns='person_id2', values='score')
     logger.info(df_pivot.shape)
     df_pivot = df_pivot.fillna(1)
     tSNE_result=tSNE.fit_transform(df_pivot)
@@ -189,10 +178,10 @@ def tsne_people():
     logger.info(vector_df.shape)
     
     # add org info
-    org_df = pd.read_csv(PERSON_METADATA,sep='\t')[['email','org-name','org-type']]
+    org_df = pd.read_csv(PERSON_METADATA,sep='\t')[['person_id','org-name','org-type']]
     logger.info(org_df.head())
     logger.info(org_df.shape)
-    m = pd.merge(vector_df,org_df,left_on='email',right_on='email')
+    m = pd.merge(vector_df,org_df,left_on='person_id',right_on='person_id')
     m = m[m['org-type'].isin(['academicschool','academicdepartment'])]
     m['org-name'].fillna('NA',inplace=True)
     logger.info(m.head())
@@ -205,7 +194,6 @@ def tsne_people():
     plt.tight_layout()
     plt.savefig(f'workflow/results/people-tsne.pdf')  
 
-    #altair_scatter_plot(m[['email','x','y','academic-school-name']])
     plotly_scatter_plot(m)
 
 ########################################

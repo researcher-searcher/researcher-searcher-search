@@ -11,7 +11,7 @@ env = Env()
 env.read_env()
 
 ES_HOST = env.str("ELASTIC_HOST")
-ES_PORT = env.str("ELASTIC_PORT")
+ES_PORT = env.str("ELASTIC_PORT1")
 ES_USER = env.str("ELASTIC_USER")
 ES_PASSWORD = env.str("ELASTIC_PASSWORD")
 

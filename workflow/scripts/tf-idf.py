@@ -45,11 +45,11 @@ def person_to_output():
     logger.info(rm_df.shape)
     noun_df = pd.read_csv("workflow/results/text_data_noun_chunks.tsv.gz",sep='\t')
     logger.info(noun_df.shape)
-    m = rm_df.merge(noun_df,left_on="url",right_on="url")[['email','noun_phrase']]
+    m = rm_df.merge(noun_df,left_on="url",right_on="url")[['person_id','noun_phrase']]
     m['noun_phrase'] = m['noun_phrase'].str.lower()
     logger.info(m.shape)
     logger.info(m.head())
-    grouped = m.groupby('email')['noun_phrase'].apply(list).reset_index(name = 'noun_list')
+    grouped = m.groupby('person_id')['noun_phrase'].apply(list).reset_index(name = 'noun_list')
     return grouped
 
 def run():
@@ -62,11 +62,11 @@ def run():
     logger.info(person_noun_chunks)
     res = []
     for i,row in person_noun_chunks.iterrows():
-        logger.info(f"{i} {row['email']}")
+        logger.info(f"{i} {row['person_id']}")
         sorted_res = tfidf_doc(tfidf=vectorizer,text=row['noun_list'])
         #logger.info(sorted_res)
         for i in sorted_res[:100]:
-            res.append({'email':row['email'],'noun_chunk':i[0],'score':i[1]})
+            res.append({'person_id':row['person_id'],'noun_chunk':i[0],'score':i[1]})
     #logger.info(res)
     df = pd.DataFrame(res)
     df.to_csv("workflow/results/noun_chunks_tfidf.tsv.gz",sep='\t',index=False)

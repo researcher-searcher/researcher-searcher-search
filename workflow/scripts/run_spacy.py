@@ -25,7 +25,7 @@ spacy_stopwords = spacy.lang.en.stop_words.STOP_WORDS
 
 def create_texts():
     # Process whole documents
-    research_df = pd.read_csv(f"{args.input}.tsv.gz", sep="\t")
+    research_df = pd.read_csv(f"{args.input}.tsv.gz", sep="\t",nrows=100)
     vector_data = []
     noun_data = []  
     existing_vector_data = []
@@ -90,7 +90,7 @@ def create_vectors(research_df, vector_data, text_type):
     
     for i in range(0, len(docs)):
         doc = docs[i]
-        #logger.info(doc)
+        logger.info(doc)
         df_row = research_df.iloc[i]
         if i % 1000 == 0:
             logger.info(f"{i} {len(docs)}")
@@ -116,6 +116,7 @@ def create_vectors(research_df, vector_data, text_type):
                     }
                 )
             sent_num += 1
+            logger.info(len(vector_data))
     return vector_data
 
 
@@ -192,11 +193,15 @@ if __name__ == "__main__":
     vector_data = create_vectors(research_df, vector_data, 'abstract')
     # logger.info(data)
     df = pd.DataFrame(noun_data)
+    logger.info(df.shape)
     df.dropna(inplace=True)
+    logger.info(df.shape)
     df.to_csv(noun_outfile, sep="\t", index=False)
 
     df = pd.DataFrame(vector_data)
+    logger.info(df.shape)
     df.dropna(inplace=True)
+    logger.info(df.shape)
     logger.info(df.head())
     df.to_pickle(vector_outfile)
 
