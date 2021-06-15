@@ -1,0 +1,91 @@
+import os
+import pandas as pd
+import yaml
+
+configfile: 'config/data.yaml'
+
+print(config['emails'])
+
+OUTDIR='workflow/results/'
+
+PERSON_DATA = f'{OUTDIR}person_data'
+PERSON_METADATA = f'{OUTDIR}person_metadata'
+RESEARCH_DATA = f'{OUTDIR}research_data'
+RESEARCH_METADATA = f'{OUTDIR}research_metadata'
+TEXT_DATA = f'{OUTDIR}text_data'
+INDEX_DATA = f'{OUTDIR}index_data'
+DONE = f'{OUTDIR}done'
+
+rule find_person:
+    input: config['emails']
+    output: PERSON_DATA
+    shell: 
+        """
+        python -m workflow.scripts.find_pure_people --input {input} --output {output} --top 1000
+        """
+
+#rule get_person_data:
+#    input: PERSON_DATA
+#    output: PERSON_METADATA
+#    shell: 
+#        """
+#        python -m workflow.scripts.get_pure_person_data --input {input} --output {output}
+#        """
+
+#rule get_research_output:
+#    input: PERSON_DATA
+#    output: RESEARCH_METADATA
+#    shell:
+#        """
+#        python -m workflow.scripts.get_pure_research_metadata --input {input} --output {output}
+#        """
+
+rule get_person_data:
+    input: PERSON_DATA
+    output: a=PERSON_METADATA,b=RESEARCH_METADATA
+    shell: 
+        """
+        python -m workflow.scripts.get_pure_person_data --input {input} --output {output.a}
+        python -m workflow.scripts.get_pure_research_metadata --input {input} --output {output.b}
+        """
+
+rule get_research_details:
+    input: RESEARCH_METADATA
+    output: RESEARCH_DATA
+    shell:
+        """
+        python -m workflow.scripts.get_pure_research_data --input {input} --output {output}
+        """
+
+rule parse_text:
+    input: RESEARCH_DATA
+    output: TEXT_DATA
+    shell:
+        """
+        python -m workflow.scripts.run_spacy --input {input} --output {output}
+        """
+
+rule process_text:
+    input: TEXT_DATA
+    output: INDEX_DATA
+    shell:
+        """
+        python -m workflow.scripts.aaa --input {input} --output {output}
+        python -m workflow.scripts.tf-idf 
+        """
+
+rule index_data:
+    input: INDEX_DATA
+    output: DONE
+    shell:
+        """
+        python -m workflow.scripts.index_data --input {input} --output {output}
+        """
+
+
+rule clean_for_build:
+    shell:
+        """
+        echo 'Deleting files'
+        rm -f {PERSON_DATA} {PERSON_METADATA} {RESEARCH_DATA} {RESEARCH_METADATA} {TEXT_DATA} {INDEX_DATA}
+        """
