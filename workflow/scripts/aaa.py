@@ -145,6 +145,7 @@ def create_pairwise_people(aaa):
             })
     df = pd.DataFrame(data)
     df.drop_duplicates(subset=['person_id1','person_id2'],inplace=True)
+    logger.info(df.shape)
     logger.info(f'Writing {PEOPLE_PAIRS}')
     df.to_pickle(PEOPLE_PAIRS)  
 
