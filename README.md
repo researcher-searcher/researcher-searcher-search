@@ -10,6 +10,8 @@ ELASTIC_HOST=
 ELASTIC_PORT1=9200
 ELASTIC_PORT2=9300
 ELASTIC_USER=elastic
+KIBANA_PORT=5601
+NAME=name
 ```
 
 # create and start es container
