@@ -179,7 +179,7 @@ def tsne_people():
     logger.info(vector_df.shape)
     
     # add org info
-    org_df = pd.read_csv(PERSON_METADATA,sep='\t')[['person_id','org-name','org-type']]
+    org_df = pd.read_csv(PERSON_METADATA,sep='\t')[['name','person_id','org-name','org-type']]
     logger.info(org_df.head())
     logger.info(org_df.shape)
     m = pd.merge(vector_df,org_df,left_on='person_id',right_on='person_id')
