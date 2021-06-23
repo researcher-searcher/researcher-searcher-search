@@ -5,7 +5,7 @@ services:
   # Elasticsearch Docker Images: https://www.docker.elastic.co/
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:$ELASTIC_VERSION
-    container_name: researcher-searcher-elasticsearch-$NAME
+    container_name: rs-search-elasticsearch-$NAME
     environment:
       - bootstrap.memory_lock=true
       - discovery.type=single-node
@@ -24,18 +24,37 @@ services:
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     ports:
-      - $ELASTIC_PORT1:9200
-      - $ELASTIC_PORT2:9300
+      - ${ELASTIC_HTTP:-9200}:9200
+      - ${ELASTIC_HTTPS:-9300}:9300
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:$ELASTIC_VERSION
+    container_name: rs-search-logstash-$NAME
+    environment:
+      - xpack.monitoring.enabled=true
+      - xpack.monitoring.elasticsearch.username=elastic
+      - xpack.monitoring.elasticsearch.password=$ELASTIC_PASSWORD
+      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
+      - ELASTIC_PASSWORD=$ELASTIC_PASSWORD
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    ports:
+      - ${LOGSTASH_BEATS_PORT:-5044}:5044
+    depends_on:
+      - elasticsearch
 
   kibana:
     image: docker.elastic.co/kibana/kibana:$ELASTIC_VERSION
+    container_name: rs-search-kibana-$NAME
     environment:
       - ELASTICSEARCH_USERNAME=elastic
       - ELASTICSEARCH_PASSWORD=$ELASTIC_PASSWORD
     ports: 
-      - $KIBANA_PORT:5601
-    links: ['elasticsearch']
-    depends_on: ['elasticsearch']
+      - ${KIBANA_PORT:-5601}:5601
+    depends_on:
+      - elasticsearch
+
+  
 
 # this named volume avoid issues with local volume permissions
 # it does mean the data are stored /var/lib/docker/volumes
