@@ -35,8 +35,9 @@ services:
       - xpack.monitoring.elasticsearch.username=elastic
       - xpack.monitoring.elasticsearch.password=$ELASTIC_PASSWORD
       - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
+      - ELASTIC_PASSWORD=$ELASTIC_PASSWORD
     volumes:
-      - ./logstash.conf:/usr/share/logstash/config/logstash.conf
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
     ports:
       - ${LOGSTASH_BEATS_PORT:-5044}:5044
     depends_on:
