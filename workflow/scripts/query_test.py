@@ -41,16 +41,12 @@ test_text4 = (
     "flow cytometry provides an efficient and rapid approach for the categorisation of hereditary spherocytosis arising "
     "from ankyrin deficiency."
 )
-test_text5 = (
-    "Risk factors for breast cancer"
-)
+test_text5 = "Risk factors for breast cancer"
 
 test_text6 = "neuroscience"
 
-#https://pubmed.ncbi.nlm.nih.gov/25751625/
-test_text7 = (
-    "Genome-wide association studies (GWAS) and large-scale replication studies have identified common variants in 79 loci associated with breast cancer, explaining ∼14% of the familial risk of the disease. To identify new susceptibility loci, we performed a meta-analysis of 11 GWAS, comprising 15,748 breast cancer cases and 18,084 controls together with 46,785 cases and 42,892 controls from 41 studies genotyped on a 211,155-marker custom array (iCOGS). Analyses were restricted to women of European ancestry. We generated genotypes for more than 11 million SNPs by imputation using the 1000 Genomes Project reference panel, and we identified 15 new loci associated with breast cancer at P < 5 × 10(-8). Combining association analysis with ChIP-seq chromatin binding data in mammary cell lines and ChIA-PET chromatin interaction data from ENCODE, we identified likely target genes in two regions: SETBP1 at 18q12.3 and RNF115 and PDZK1 at 1q21.1. One association appears to be driven by an amino acid substitution encoded in EXO1."
-)
+# https://pubmed.ncbi.nlm.nih.gov/25751625/
+test_text7 = "Genome-wide association studies (GWAS) and large-scale replication studies have identified common variants in 79 loci associated with breast cancer, explaining ∼14% of the familial risk of the disease. To identify new susceptibility loci, we performed a meta-analysis of 11 GWAS, comprising 15,748 breast cancer cases and 18,084 controls together with 46,785 cases and 42,892 controls from 41 studies genotyped on a 211,155-marker custom array (iCOGS). Analyses were restricted to women of European ancestry. We generated genotypes for more than 11 million SNPs by imputation using the 1000 Genomes Project reference panel, and we identified 15 new loci associated with breast cancer at P < 5 × 10(-8). Combining association analysis with ChIP-seq chromatin binding data in mammary cell lines and ChIA-PET chromatin interaction data from ENCODE, we identified likely target genes in two regions: SETBP1 at 18q12.3 and RNF115 and PDZK1 at 1q21.1. One association appears to be driven by an amino acid substitution encoded in EXO1."
 
 # create vectof of each string
 def q1(text):
@@ -66,7 +62,7 @@ def q1(text):
         if res:
             for r in res[:10]:
                 if r["score"] > 0.5:
-                    logger.info(f'full sent {r}')
+                    logger.info(f"full sent {r}")
 
         # noun chunks
         noun_chunk_string = ""
@@ -83,15 +79,16 @@ def q1(text):
                 # might work better here to avoid ambiguous single words, e.g. funding, background...
                 if len(chunk) > 0:
                     logger.info(f"noun chunk: {chunk} {len(chunk)}")
-                    noun_chunk_string+=str(chunk)+' '
+                    noun_chunk_string += str(chunk) + " "
         logger.info(noun_chunk_string)
-        if noun_chunk_string != '':
+        if noun_chunk_string != "":
             chunk_vec = nlp(noun_chunk_string).vector
             res = vector_query(index_name=vector_index_name, query_vector=chunk_vec)
             if res:
                 for r in res[:10]:
                     if r["score"] > 0.5:
-                        logger.info(f'chunk {r}')
+                        logger.info(f"chunk {r}")
+
 
 # use whole doc as vector
 def q2(text):
@@ -107,24 +104,19 @@ def q2(text):
 
 # standard match against sentence text
 def q3(text):
-    body={
+    body = {
         # "from":from_val,
         "size": 5,
-        "query": {
-             "match": {
-                "sent_text": {
-                    "query": text     
-                }
-            }
-        },
-        "_source": ["doc_id","sent_num","sent_text"]
+        "query": {"match": {"sent_text": {"query": text}}},
+        "_source": ["doc_id", "sent_num", "sent_text"],
     }
-    res = standard_query(index_name=vector_index_name,body=body)
+    res = standard_query(index_name=vector_index_name, body=body)
     if res:
-        for r in res['hits']['hits']:
+        for r in res["hits"]["hits"]:
             if r["_score"] > 0.5:
                 logger.info(pp.pprint(r))
     return res
+
 
 # combine vectors and full text
 def q4(text):
@@ -134,33 +126,34 @@ def q4(text):
         if r["score"] > 0.5:
             summary.append(
                 {
-                'search':'vector',
-                'url':r["url"],
-                'sent_num':r['sent_num'],
-                'sent_text':r['sent_text'],
-                'score':r['score'],
+                    "search": "vector",
+                    "url": r["url"],
+                    "sent_num": r["sent_num"],
+                    "sent_text": r["sent_text"],
+                    "score": r["score"],
                 }
             )
     text_res = q3(text)
-    for r in text_res['hits']['hits']:
-        #logger.debug(r['_source'])
+    for r in text_res["hits"]["hits"]:
+        # logger.debug(r['_source'])
         summary.append(
             {
-            'search':'text',
-            'url':r['_source']["doc_id"],
-            'sent_num':r['_source']['sent_num'],
-            'sent_text':r['_source']['sent_text'],
-            'score':r['_score'],
+                "search": "text",
+                "url": r["_source"]["doc_id"],
+                "sent_num": r["_source"]["sent_num"],
+                "sent_text": r["_source"]["sent_text"],
+                "score": r["_score"],
             }
         )
     df = pd.DataFrame(summary)
     print(df)
-    print(df['search'].value_counts())
-    df.to_csv('workflow/results/search.tsv',sep='\t')
+    print(df["search"].value_counts())
+    df.to_csv("workflow/results/search.tsv", sep="\t")
 
-#q1()
-#q2()
-#q3()
-text = 'military health'
-#text = 'Text to speech / speech to text'
+
+# q1()
+# q2()
+# q3()
+text = "military health"
+# text = 'Text to speech / speech to text'
 q1(text)

@@ -11,15 +11,16 @@ env = Env()
 env.read_env()
 
 ES_HOST = env.str("ELASTIC_HOST")
-ES_PORT = env.str("ELASTIC_PORT1")
+ES_PORT = env.str("ELASTIC_HTTP")
 ES_USER = env.str("ELASTIC_USER")
 ES_PASSWORD = env.str("ELASTIC_PASSWORD")
 
 TIMEOUT = 300
 chunkSize = 10000
-#es = Elasticsearch(["localhost:9200"], timeout=TIMEOUT)
-es = Elasticsearch([f'{ES_HOST}:{ES_PORT}'], http_auth=(ES_USER, ES_PASSWORD), timeout=TIMEOUT)
-
+# es = Elasticsearch(["localhost:9200"], timeout=TIMEOUT)
+es = Elasticsearch(
+    [f"{ES_HOST}:{ES_PORT}"], http_auth=(ES_USER, ES_PASSWORD), timeout=TIMEOUT
+)
 
 
 def create_vector_index(index_name, dim_size):
@@ -103,7 +104,8 @@ def create_mean_vector_index(index_name, dim_size):
         res = es.indices.create(
             index=index_name, body=request_body, request_timeout=TIMEOUT
         )
-        logger.info(res) 
+        logger.info(res)
+
 
 def index_vector_data(df, index_name, text_type):
     logger.info(f"Indexing data...{index_name}")
@@ -121,7 +123,7 @@ def index_vector_data(df, index_name, text_type):
             t = round((end - start), 4)
             logger.info(f"{len(bulk_data)} {t} {counter}")
         # seprate data into indexes by title/abstract
-        if rows['text_type'] == text_type:
+        if rows["text_type"] == text_type:
             if counter % chunkSize == 0:
                 deque(
                     helpers.streaming_bulk(
@@ -135,9 +137,9 @@ def index_vector_data(df, index_name, text_type):
                 )
                 bulk_data = []
             if np.count_nonzero(rows["vector"]) == 0:
-                #logger.info(
+                # logger.info(
                 #    f"{rows['url']} {rows['sent_num']} returned empty vector so skipping"
-                #)
+                # )
                 continue
             else:
                 data_dict = {
@@ -174,6 +176,7 @@ def index_vector_data(df, index_name, text_type):
     except TIMEOUT:
         logger.info(f"counting index timeout {index_name}")
 
+
 def index_mean_vector_data(df, index_name, id_field):
     logger.info("Indexing data...")
     # create_index(index_name)
@@ -202,9 +205,9 @@ def index_mean_vector_data(df, index_name, id_field):
             )
             bulk_data = []
         if np.count_nonzero(rows["vector"]) == 0:
-            #logger.info(
+            # logger.info(
             #    f"{rows['url']} {rows['sent_num']} returned empty vector so skipping"
-            #)
+            # )
             continue
         else:
             data_dict = {
@@ -238,9 +241,11 @@ def index_mean_vector_data(df, index_name, id_field):
     except TIMEOUT:
         logger.info(f"counting index timeout {index_name}")
 
+
 def boost_index(body):
-    logger.info(f'Index boost {body}')
+    logger.info(f"Index boost {body}")
     res = es.search(body=body)
+
 
 def index_noun_data(df, index_name, text_type):
     logger.info(f"Indexing data... {index_name}")
@@ -257,7 +262,7 @@ def index_noun_data(df, index_name, text_type):
             end = time.time()
             t = round((end - start), 4)
             logger.info(f"{len(bulk_data)} {t} {counter}")
-        if rows['text_type'] == text_type:
+        if rows["text_type"] == text_type:
             if counter % chunkSize == 0:
                 deque(
                     helpers.streaming_bulk(
@@ -274,7 +279,7 @@ def index_noun_data(df, index_name, text_type):
                 "doc_id": rows["url"],
                 "year": rows["year"],
                 "sent_num": rows["sent_num"],
-                "noun_phrase": rows["noun_phrase"]
+                "noun_phrase": rows["noun_phrase"],
             }
             op_dict = {
                 "_index": index_name,
@@ -302,6 +307,7 @@ def index_noun_data(df, index_name, text_type):
         logger.info(f"Number of records in index {index_name} = {esRecords}")
     except TIMEOUT:
         logger.info(f"counting index timeout {index_name}")
+
 
 def delete_index(index_name):
     logger.info(f"Deleting {index_name}")
@@ -357,13 +363,9 @@ def vector_query(
     except:
         return []
 
-def standard_query(
-    index_name, body
-):
+
+def standard_query(index_name, body):
     res = es.search(
-        ignore_unavailable=True,
-        request_timeout=TIMEOUT,
-        index=index_name,
-        body=body
+        ignore_unavailable=True, request_timeout=TIMEOUT, index=index_name, body=body
     )
     return res
