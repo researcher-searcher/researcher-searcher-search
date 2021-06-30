@@ -9,18 +9,22 @@ from loguru import logger
 from simple_parsing import ArgumentParser
 from sklearn.manifold import TSNE
 from workflow.scripts.es_functions import vector_query, standard_query
-from workflow.scripts.general import load_spacy_model, create_aaa_distances, mark_as_complete
+from workflow.scripts.general import (
+    load_spacy_model,
+    create_aaa_distances,
+    mark_as_complete,
+)
 
-PEOPLE_DATA = 'workflow/results/person_data.tsv.gz'
-PERSON_METADATA = 'workflow/results/person_metadata.tsv.gz'
-RESEARCH_METADATA = 'workflow/results/research_metadata.tsv.gz'
-RESEARCH_DATA = 'workflow/results/text_data_vectors.pkl.gz'
-RESEARCH_VECTORS = 'workflow/results/research_vectors.pkl.gz'
-PEOPLE_VECTORS = 'workflow/results/people_vectors.pkl.gz'
-RESEARCH_PAIRS = 'workflow/results/research_vector_pairs.pkl.gz'
-PEOPLE_PAIRS = 'workflow/results/people_vector_pairs.pkl.gz'
+PEOPLE_DATA = "workflow/results/person_data.tsv.gz"
+PERSON_METADATA = "workflow/results/person_metadata.tsv.gz"
+RESEARCH_METADATA = "workflow/results/research_metadata.tsv.gz"
+RESEARCH_DATA = "workflow/results/text_data_vectors.pkl.gz"
+RESEARCH_VECTORS = "workflow/results/research_vectors.pkl.gz"
+PEOPLE_VECTORS = "workflow/results/people_vectors.pkl.gz"
+RESEARCH_PAIRS = "workflow/results/research_vector_pairs.pkl.gz"
+PEOPLE_PAIRS = "workflow/results/people_vector_pairs.pkl.gz"
 
-tSNE=TSNE(n_components=2)
+tSNE = TSNE(n_components=2)
 
 parser = ArgumentParser()
 
@@ -28,193 +32,198 @@ parser.add_argument("--input", type=str, help="Input file prefix")
 parser.add_argument("--output", type=str, help="Output file prefix")
 args = parser.parse_args()
 
+
 def create_mean_research_vectors():
     if os.path.exists(RESEARCH_VECTORS):
-        logger.info(f'{RESEARCH_VECTORS} done')
+        logger.info(f"{RESEARCH_VECTORS} done")
     else:
-        logger.info(f'Reading {RESEARCH_DATA}')
+        logger.info(f"Reading {RESEARCH_DATA}")
         df = pd.read_pickle(RESEARCH_DATA)
-        logger.info(f'\n{df.head()}')
+        logger.info(f"\n{df.head()}")
 
-        vectors = df[['url','vector']].groupby(['url'])
+        vectors = df[["url", "vector"]].groupby(["url"])
         data = []
         for v in vectors:
-            vector_list = list(v[1]['vector'])
-            mean_vector = list(np.mean(vector_list,axis=0))
-            data.append({'url':v[0],'vector':mean_vector})
+            vector_list = list(v[1]["vector"])
+            mean_vector = list(np.mean(vector_list, axis=0))
+            data.append({"url": v[0], "vector": mean_vector})
         md = pd.DataFrame(data)
         md.to_pickle(RESEARCH_VECTORS)
 
-def aaa_vectors(vector_file,name):
-    aaa_file = f'workflow/results/{name}-aaa.npy'
+
+def aaa_vectors(vector_file, name):
+    aaa_file = f"workflow/results/{name}-aaa.npy"
     if os.path.exists(aaa_file):
-        logger.info(f'{aaa_file} done')
+        logger.info(f"{aaa_file} done")
         return np.load(aaa_file)
     else:
         vector_df = pd.read_pickle(vector_file)
-        vectors = list(vector_df['vector'])
+        vectors = list(vector_df["vector"])
         logger.info(len(vectors))
         aaa = create_aaa_distances(vectors)
-        np.save(aaa_file,aaa)
+        np.save(aaa_file, aaa)
         return aaa
+
 
 def create_pairwise_research(aaa):
     vector_df = pd.read_pickle(RESEARCH_VECTORS)
     num = vector_df.shape[0]
     data = []
-    urls = list(vector_df['url'])
-    #pcheck=[]
-    for i in range(0,num):
+    urls = list(vector_df["url"])
+    # pcheck=[]
+    for i in range(0, num):
         if i % 1000 == 0:
             logger.info(i)
         iname = urls[i]
-        for j in range(0,num):
+        for j in range(0, num):
             jname = urls[j]
             # only keep one set of pairs
-            if j>i:
-                score = 1-aaa[i][j]
-                # remove same pairs 
+            if j > i:
+                score = 1 - aaa[i][j]
+                # remove same pairs
                 # filter on score (what value?)
-                if score>0.9: 
-                    data.append({
-                        'url1':iname,
-                        'url2':jname,
-                        'score': score
-                    })
+                if score > 0.9:
+                    data.append({"url1": iname, "url2": jname, "score": score})
     df = pd.DataFrame(data)
     logger.info(df.shape)
-    df.drop_duplicates(subset=['url1','url2'],inplace=True)
-    logger.info(f'Writing {RESEARCH_PAIRS}')
-    df.to_pickle(RESEARCH_PAIRS)    
+    df.drop_duplicates(subset=["url1", "url2"], inplace=True)
+    logger.info(f"Writing {RESEARCH_PAIRS}")
+    df.to_pickle(RESEARCH_PAIRS)
+
 
 def tsne_research():
-    df=pd.read_pickle(RESEARCH_PAIRS)
+    df = pd.read_pickle(RESEARCH_PAIRS)
     logger.info(df.head())
-    df_pivot = df.pivot(index='url1', columns='url2', values='score')
+    df_pivot = df.pivot(index="url1", columns="url2", values="score")
     logger.info(df_pivot.shape)
     df_pivot = df_pivot.fillna(1)
-    tSNE_result=tSNE.fit_transform(df_pivot)
-    x=tSNE_result[:,0]
-    y=tSNE_result[:,1]
+    tSNE_result = tSNE.fit_transform(df_pivot)
+    x = tSNE_result[:, 0]
+    y = tSNE_result[:, 1]
     vector_df = pd.read_pickle(RESEARCH_VECTORS)
-    vector_df['x']=x
-    vector_df['y']=y
+    vector_df["x"] = x
+    vector_df["y"] = y
     logger.info(vector_df.head())
-    plt.figure(figsize=(16,7))
-    sns.scatterplot(x='x',y='y',data=vector_df, legend="full")
-    plt.savefig(f'workflow/results/research-tsne.pdf')        
+    plt.figure(figsize=(16, 7))
+    sns.scatterplot(x="x", y="y", data=vector_df, legend="full")
+    plt.savefig(f"workflow/results/research-tsne.pdf")
+
 
 def create_mean_people_vectors():
-    logger.info(f'Reading {RESEARCH_METADATA}')
-    meta_df = pd.read_csv(RESEARCH_METADATA,sep='\t')
+    logger.info(f"Reading {RESEARCH_METADATA}")
+    meta_df = pd.read_csv(RESEARCH_METADATA, sep="\t")
     logger.info(meta_df.head())
 
-    #merge with research info
-    logger.info(f'Reading {RESEARCH_DATA}')
+    # merge with research info
+    logger.info(f"Reading {RESEARCH_DATA}")
     data_df = pd.read_pickle(RESEARCH_DATA)
     logger.info(data_df.head())
 
-    df = pd.merge(meta_df,data_df,left_on='url',right_on='url')
+    df = pd.merge(meta_df, data_df, left_on="url", right_on="url")
     logger.info(df.shape)
-    logger.info(f'\n{df.head()}')
-    
-    vectors = df[['person_id','vector']].groupby(['person_id'])
+    logger.info(f"\n{df.head()}")
+
+    vectors = df[["person_id", "vector"]].groupby(["person_id"])
     data = []
     for v in vectors:
-        vector_list = list(v[1]['vector'])
-        mean_vector = list(np.mean(vector_list,axis=0))
-        data.append({'person_id':v[0],'vector':mean_vector})
+        vector_list = list(v[1]["vector"])
+        mean_vector = list(np.mean(vector_list, axis=0))
+        data.append({"person_id": v[0], "vector": mean_vector})
     md = pd.DataFrame(data)
     md.to_pickle(PEOPLE_VECTORS)
+
 
 def create_pairwise_people(aaa):
     vector_df = pd.read_pickle(PEOPLE_VECTORS)
     num = vector_df.shape[0]
     data = []
-    person_ids = list(vector_df['person_id'])
-    for i in range(0,num):
+    person_ids = list(vector_df["person_id"])
+    for i in range(0, num):
         if i % 1000 == 0:
             logger.info(i)
         iname = person_ids[i]
-        for j in range(0,num):
+        for j in range(0, num):
             jname = person_ids[j]
-            data.append({
-                'person_id1':iname,
-                'person_id2':jname,
-                'score': 1-aaa[i][j]
-            })
+            data.append(
+                {"person_id1": iname, "person_id2": jname, "score": 1 - aaa[i][j]}
+            )
     df = pd.DataFrame(data)
-    df.drop_duplicates(subset=['person_id1','person_id2'],inplace=True)
+    df.drop_duplicates(subset=["person_id1", "person_id2"], inplace=True)
     logger.info(df.shape)
-    logger.info(f'Writing {PEOPLE_PAIRS}')
-    df.to_pickle(PEOPLE_PAIRS)  
+    logger.info(f"Writing {PEOPLE_PAIRS}")
+    df.to_pickle(PEOPLE_PAIRS)
+
 
 def plotly_scatter_plot(df):
-    #import plotly.graph_objects as go
-    #fig = go.Figure(data=go.Bar(y=[2, 3, 1]))
-    #fig.write_html('workflow/results/first_figure.html', auto_open=True)
+    # import plotly.graph_objects as go
+    # fig = go.Figure(data=go.Bar(y=[2, 3, 1]))
+    # fig.write_html('workflow/results/first_figure.html', auto_open=True)
 
     import plotly.express as px
-    fig = px.scatter(
-        df, 
-        x="x", 
-        y="y", 
-        color="org-name",
-        hover_data=['person_id']
-        )
-    fig.write_html('workflow/results/plotly.html')
+
+    fig = px.scatter(df, x="x", y="y", color="org-name", hover_data=["person_id"])
+    fig.write_html("workflow/results/plotly.html")
+
 
 def tsne_people():
-    df=pd.read_pickle(PEOPLE_PAIRS)
+    df = pd.read_pickle(PEOPLE_PAIRS)
     logger.info(df.head())
-    df_pivot = df.pivot(index='person_id1', columns='person_id2', values='score')
+    df_pivot = df.pivot(index="person_id1", columns="person_id2", values="score")
     logger.info(df_pivot.shape)
     df_pivot = df_pivot.fillna(1)
-    tSNE_result=tSNE.fit_transform(df_pivot)
-    x=tSNE_result[:,0]
-    y=tSNE_result[:,1]
+    tSNE_result = tSNE.fit_transform(df_pivot)
+    x = tSNE_result[:, 0]
+    y = tSNE_result[:, 1]
     vector_df = pd.read_pickle(PEOPLE_VECTORS)
-    vector_df['x']=x
-    vector_df['y']=y
+    vector_df["x"] = x
+    vector_df["y"] = y
     logger.info(vector_df.shape)
-    
+
     # add org info
-    org_df = pd.read_csv(PERSON_METADATA,sep='\t')[['name','person_id','org-name','org-type']]
+    org_df = pd.read_csv(PERSON_METADATA, sep="\t")[
+        ["name", "person_id", "org-name", "org-type"]
+    ]
     logger.info(org_df.head())
     logger.info(org_df.shape)
-    m = pd.merge(vector_df,org_df,left_on='person_id',right_on='person_id')
-    m = m[m['org-type'].isin(['academicschool','academicdepartment'])]
-    m['org-name'].fillna('NA',inplace=True)
+    m = pd.merge(vector_df, org_df, left_on="person_id", right_on="person_id")
+    m = m[m["org-type"].isin(["academicschool", "academicdepartment"])]
+    m["org-name"].fillna("NA", inplace=True)
     logger.info(m.head())
     logger.info(m.shape)
 
-    plt.figure(figsize=(16,7))
-    sns.scatterplot(x='x',y='y',data=m, legend="full", style='org-name', hue='org-name')
-    plt.legend(bbox_to_anchor=(1.01, 1),borderaxespad=0)
+    plt.figure(figsize=(16, 7))
+    sns.scatterplot(
+        x="x", y="y", data=m, legend="full", style="org-name", hue="org-name"
+    )
+    plt.legend(bbox_to_anchor=(1.01, 1), borderaxespad=0)
     plt.title("tSNE of person research")
     plt.tight_layout()
-    plt.savefig(f'workflow/results/people-tsne.pdf')  
+    plt.savefig(f"workflow/results/people-tsne.pdf")
 
     plotly_scatter_plot(m)
 
     # save to file
-    m.to_csv(f'workflow/results/tsne.csv.gz',index=False)
+    m.to_csv(f"workflow/results/tsne.csv.gz", index=False)
+
 
 ########################################
 
+
 def research_aaa():
     create_mean_research_vectors()
-    aaa=aaa_vectors(RESEARCH_VECTORS,'research')
+    aaa = aaa_vectors(RESEARCH_VECTORS, "research")
     create_pairwise_research(aaa)
-    #tsne_research()
+    # tsne_research()
+
 
 def people_aaa():
     create_mean_people_vectors()
-    aaa=aaa_vectors(PEOPLE_VECTORS,'people')
+    aaa = aaa_vectors(PEOPLE_VECTORS, "people")
     create_pairwise_people(aaa)
     tsne_people()
 
+
 if __name__ == "__main__":
-    research_aaa()    
+    research_aaa()
     people_aaa()
     mark_as_complete(args.output)
