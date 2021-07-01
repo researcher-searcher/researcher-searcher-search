@@ -32,6 +32,8 @@ rule index_data:
     output: DONE
     shell:
         """
+        docker-compose up -d --no-recreate
+        sleep 30
         python -m workflow.scripts.index_data --input {input} --output {output}
         """
 
