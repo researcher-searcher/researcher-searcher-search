@@ -200,7 +200,7 @@ def tsne_people():
     plt.tight_layout()
     plt.savefig(f"workflow/results/people-tsne.pdf")
 
-    plotly_scatter_plot(m)
+    #plotly_scatter_plot(m)
 
     # save to file
     m.to_csv(f"workflow/results/tsne.csv.gz", index=False)

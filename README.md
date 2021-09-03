@@ -37,11 +37,8 @@ Run vector comparisons and tf-idf
 
 `snakemake -r process_text -j1`
 
-## create and start containers
-
-`docker-compose up -d`
-
-## Index the data
+Create indexes
+- note this creates and starts elasticsearch, kibana and logstash docker containrs
 
 `snakemake -r index_data -j1`
 
@@ -49,3 +46,7 @@ Run vector comparisons and tf-idf
 
 Spacy requires memory, especially when parsing abstracts.
 - might need to run this in batches if memory low 
+
+# Todo
+
+- Test input files for correct format
