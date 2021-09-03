@@ -18,12 +18,15 @@ ES_PASSWORD = env.str("ELASTIC_PASSWORD")
 TIMEOUT = 300
 chunkSize = 10000
 # es = Elasticsearch(["localhost:9200"], timeout=TIMEOUT)
-es = Elasticsearch(
-    [f"{ES_HOST}:{ES_PORT}"], http_auth=(ES_USER, ES_PASSWORD), timeout=TIMEOUT
-)
+def es_connect():
+    es = Elasticsearch(
+        [f"{ES_HOST}:{ES_PORT}"], http_auth=(ES_USER, ES_PASSWORD), timeout=TIMEOUT
+    )
+    return es
 
 
 def create_vector_index(index_name, dim_size):
+    es = es_connect()
     if es.indices.exists(index_name, request_timeout=TIMEOUT):
         logger.info("Index name already exists, please choose another")
     else:
@@ -53,6 +56,7 @@ def create_vector_index(index_name, dim_size):
 
 
 def create_noun_index(index_name):
+    es = es_connect()
     if es.indices.exists(index_name, request_timeout=TIMEOUT):
         logger.info("Index name already exists, please choose another")
     else:
@@ -82,6 +86,7 @@ def create_noun_index(index_name):
 
 
 def create_mean_vector_index(index_name, dim_size):
+    es = es_connect()
     if es.indices.exists(index_name, request_timeout=TIMEOUT):
         logger.info("Index name already exists, please choose another")
     else:
@@ -108,6 +113,7 @@ def create_mean_vector_index(index_name, dim_size):
 
 
 def index_vector_data(df, index_name, text_type):
+    es = es_connect()
     logger.info(f"Indexing data...{index_name}")
     # create_index(index_name)
     bulk_data = []
@@ -178,6 +184,7 @@ def index_vector_data(df, index_name, text_type):
 
 
 def index_mean_vector_data(df, index_name, id_field):
+    es = es_connect()
     logger.info("Indexing data...")
     # create_index(index_name)
     bulk_data = []
@@ -243,11 +250,13 @@ def index_mean_vector_data(df, index_name, id_field):
 
 
 def boost_index(body):
+    es = es_connect()
     logger.info(f"Index boost {body}")
     res = es.search(body=body)
 
 
 def index_noun_data(df, index_name, text_type):
+    es = es_connect()
     logger.info(f"Indexing data... {index_name}")
     # create_index(index_name)
     bulk_data = []
@@ -310,7 +319,8 @@ def index_noun_data(df, index_name, text_type):
 
 
 def delete_index(index_name):
-    logger.info(f"Deleting {index_name}")
+    es = es_connect()
+    logger.info(f"Deleting {index_name} {es}")
     if es.indices.exists(index_name, request_timeout=TIMEOUT):
         res = es.indices.delete(index=index_name, request_timeout=TIMEOUT)
         logger.info(res)
@@ -321,6 +331,7 @@ def delete_index(index_name):
 def vector_query(
     index_name, query_vector, record_size=100000, search_size=100, score_min=0
 ):
+    es = es_connect()
     script_query = {
         "script_score": {
             "query": {"match_all": {}},
@@ -365,6 +376,7 @@ def vector_query(
 
 
 def standard_query(index_name, body):
+    es = es_connect()
     res = es.search(
         ignore_unavailable=True, request_timeout=TIMEOUT, index=index_name, body=body
     )

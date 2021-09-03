@@ -186,7 +186,10 @@ def tsne_people():
     logger.info(org_df.head())
     logger.info(org_df.shape)
     m = pd.merge(vector_df, org_df, left_on="person_id", right_on="person_id")
-    m = m[m["org-type"].isin(["academicschool", "academicdepartment"]) | m["org-type"].isnull()]
+    m = m[
+        m["org-type"].isin(["academicschool", "academicdepartment"])
+        | m["org-type"].isnull()
+    ]
     m["org-name"].fillna("NA", inplace=True)
     logger.info(m.head())
     logger.info(m.shape)
@@ -200,7 +203,7 @@ def tsne_people():
     plt.tight_layout()
     plt.savefig(f"workflow/results/people-tsne.pdf")
 
-    #plotly_scatter_plot(m)
+    # plotly_scatter_plot(m)
 
     # save to file
     m.to_csv(f"workflow/results/tsne.csv.gz", index=False)
