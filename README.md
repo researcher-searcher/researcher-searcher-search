@@ -24,6 +24,28 @@ NAME=name
 
 `python -m spacy download en_core_web_lg`
 
-# create and start es container
+
+# Run
+
+## Create NLP data
+
+Run spacy
+
+`snakemake -r parse_text -j1`
+
+Run vector comparisons and tf-idf
+
+`snakemake -r process_text -j1`
+
+## create and start containers
 
 `docker-compose up -d`
+
+## Index the data
+
+`snakemake -r index_data -j1`
+
+# Issues
+
+Spacy requires memory, especially when parsing abstracts.
+- might need to run this in batches if memory low 
