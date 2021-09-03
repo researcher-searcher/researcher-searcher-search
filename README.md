@@ -15,6 +15,15 @@ LOGSTASH_BEATS_PORT=5044
 NAME=name
 ```
 
+# conda
+
+`conda env create -f environment.yaml`
+`conda activate researcher-searcher`
+
+# language models
+
+`python -m spacy download en_core_web_lg`
+
 # create and start es container
 
 `docker-compose up -d`
