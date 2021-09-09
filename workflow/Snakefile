@@ -43,4 +43,5 @@ rule clean_for_build:
         """
         echo 'Deleting files'
         rm -f {RESEARCH_DATA} {RESEARCH_METADATA} {TEXT_DATA} {INDEX_DATA}
+        rm -f {OUTDIR}/*-aaa.npy
         """

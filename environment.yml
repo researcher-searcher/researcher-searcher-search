@@ -26,5 +26,5 @@ dependencies:
     - snakemake>=5.27
     - simple-parsing
     - spacy
-    - scispacy
+    #- scispacy
     - spacy-universal-sentence-encoder
