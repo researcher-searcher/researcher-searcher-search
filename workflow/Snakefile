@@ -5,7 +5,6 @@ import yaml
 OUTDIR='workflow/results'
 
 RESEARCH_DATA = f'{OUTDIR}/research_data'
-RESEARCH_METADATA = f'{OUTDIR}/research_metadata'
 TEXT_DATA = f'{OUTDIR}/text_data'
 INDEX_DATA = f'{OUTDIR}/index_data'
 DONE = f'{OUTDIR}/done'
@@ -33,7 +32,7 @@ rule index_data:
     shell:
         """
         docker-compose up -d --no-recreate
-        sleep 30
+        sleep 60
         python -m workflow.scripts.index_data --input {input} --output {output}
         """
 
@@ -42,6 +41,7 @@ rule clean_for_build:
     shell:
         """
         echo 'Deleting files'
-        rm -f {RESEARCH_DATA} {RESEARCH_METADATA} {TEXT_DATA} {INDEX_DATA}
+        rm -f {TEXT_DATA} {INDEX_DATA}
         rm -f {OUTDIR}/*-aaa.npy
+        rm -f {OUTDIR}/research_vectors.pkl.gz
         """

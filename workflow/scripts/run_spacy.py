@@ -16,7 +16,7 @@ parser.add_argument("--input", type=str, help="Input file prefix")
 parser.add_argument("--output", type=str, help="Output file prefix")
 args = parser.parse_args()
 
-vector_outfile = "workflow/results/text_data_vectors.pkl.gz"
+vector_outfile = "workflow/results/text_data_vectors.parquet.gz"
 noun_outfile = "workflow/results/text_data_noun_chunks.tsv.gz"
 
 nlp_web, nlp_use = load_spacy_model()
@@ -33,7 +33,7 @@ def create_texts():
     # check for existing
     if os.path.exists(vector_outfile) and os.path.getsize(vector_outfile) > 1:
         logger.info(f"Reading existing data {vector_outfile}")
-        existing_vector_df = pd.read_pickle(vector_outfile)
+        existing_vector_df = pd.read_parquet(vector_outfile)
         if not existing_vector_df.empty:
             # print(existing_df)
             existing_vector_data = list(existing_vector_df["url"].unique())
@@ -207,6 +207,6 @@ if __name__ == "__main__":
     df.dropna(inplace=True)
     logger.info(df.shape)
     logger.info(df.head())
-    df.to_pickle(vector_outfile)
+    df.to_parquet(vector_outfile, compression='gzip')
 
     mark_as_complete(args.output)

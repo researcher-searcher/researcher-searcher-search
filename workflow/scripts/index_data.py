@@ -21,7 +21,7 @@ parser.add_argument("--input", type=str, help="Input file prefix")
 parser.add_argument("--output", type=str, help="Output file prefix")
 args = parser.parse_args()
 
-vector_outfile = "workflow/results/text_data_vectors.pkl.gz"
+vector_outfile = "workflow/results/text_data_vectors.parquet.gz"
 noun_outfile = "workflow/results/text_data_noun_chunks.tsv.gz"
 people_vector = "workflow/results/people_vectors.pkl.gz"
 research_vector = "workflow/results/research_vectors.pkl.gz"
@@ -31,12 +31,12 @@ def index_vectors():
     vector_index_name = "use_title_sentence_vectors"
     delete_index(vector_index_name)
     create_vector_index(index_name=vector_index_name, dim_size=dim_size)
-    df = pd.read_pickle(vector_outfile)
+    df = pd.read_parquet(vector_outfile)
     index_vector_data(df=df, index_name=vector_index_name, text_type="title")
     vector_index_name = "use_abstract_sentence_vectors"
     delete_index(vector_index_name)
     create_vector_index(index_name=vector_index_name, dim_size=dim_size)
-    df = pd.read_pickle(vector_outfile)
+    df = pd.read_parquet(vector_outfile)
     index_vector_data(df=df, index_name=vector_index_name, text_type="abstract")
 
 

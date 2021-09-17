@@ -18,7 +18,7 @@ from workflow.scripts.general import (
 PEOPLE_DATA = "workflow/results/person_data.tsv.gz"
 PERSON_METADATA = "workflow/results/person_metadata.tsv.gz"
 RESEARCH_METADATA = "workflow/results/research_metadata.tsv.gz"
-RESEARCH_DATA = "workflow/results/text_data_vectors.pkl.gz"
+RESEARCH_DATA = "workflow/results/text_data_vectors.parquet.gz"
 RESEARCH_VECTORS = "workflow/results/research_vectors.pkl.gz"
 PEOPLE_VECTORS = "workflow/results/people_vectors.pkl.gz"
 RESEARCH_PAIRS = "workflow/results/research_vector_pairs.pkl.gz"
@@ -38,7 +38,7 @@ def create_mean_research_vectors():
         logger.info(f"{RESEARCH_VECTORS} done")
     else:
         logger.info(f"Reading {RESEARCH_DATA}")
-        df = pd.read_pickle(RESEARCH_DATA)
+        df = pd.read_parquet(RESEARCH_DATA)
         logger.info(f"\n{df.head()}")
 
         vectors = df[["url", "vector"]].groupby(["url"])
@@ -116,7 +116,7 @@ def create_mean_people_vectors():
 
     # merge with research info
     logger.info(f"Reading {RESEARCH_DATA}")
-    data_df = pd.read_pickle(RESEARCH_DATA)
+    data_df = pd.read_parquet(RESEARCH_DATA)
     logger.info(data_df.head())
 
     df = pd.merge(meta_df, data_df, left_on="url", right_on="url")
