@@ -5,6 +5,7 @@ services:
   # Elasticsearch Docker Images: https://www.docker.elastic.co/
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:$ELASTIC_VERSION
+    restart: always
     container_name: rs-search-elasticsearch-$NAME
     environment:
       - bootstrap.memory_lock=true
@@ -29,6 +30,7 @@ services:
 
   logstash:
     image: docker.elastic.co/logstash/logstash:$ELASTIC_VERSION
+    restart: always
     container_name: rs-search-logstash-$NAME
     environment:
       - xpack.monitoring.enabled=true
@@ -45,6 +47,7 @@ services:
 
   kibana:
     image: docker.elastic.co/kibana/kibana:$ELASTIC_VERSION
+    restart: always
     container_name: rs-search-kibana-$NAME
     environment:
       - ELASTICSEARCH_USERNAME=elastic
