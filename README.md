@@ -17,8 +17,10 @@ NAME=name
 
 # conda
 
-`conda env create -f environment.yaml`
-`conda activate researcher-searcher`
+```
+conda env create -f environment.yml
+conda activate researcher-searcher
+```
 
 # language models
 
