@@ -29,3 +29,4 @@ dependencies:
     #- scispacy
     - spacy-universal-sentence-encoder
     - pyarrow
+    - numpy
