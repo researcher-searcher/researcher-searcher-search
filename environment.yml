@@ -17,7 +17,7 @@ dependencies:
   - pyyaml
   - pip=20.2.4
   - beautifulsoup4
-  - elasticsearch
+  - elasticsearch=7.13.3
   - scikit-learn
   - plotly=4.14.3
   - xmltodict
